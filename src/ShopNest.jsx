@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import RequestShopForm from "./RequestShopForm.jsx";
 import {
   Search, MapPin, Star, Phone, Clock, ChevronRight, ChevronLeft,
@@ -142,7 +142,12 @@ function isShopOpen(hours) {
 }
 
 export default function ShopNest() {
-  const [activePage, setActivePage] = useState("home");
+  const [activePage, setActivePage] = useState(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#request") {
+      return "request";
+    }
+    return "home";
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -153,6 +158,22 @@ export default function ShopNest() {
 
   const openRequestForm = useCallback(() => setActivePage("request"), []);
   const goHome = useCallback(() => setActivePage("home"), []);
+
+  useEffect(() => {
+    if (activePage === "request") {
+      window.history.replaceState(null, "", "#request");
+    } else {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, [activePage]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setActivePage(window.location.hash === "#request" ? "request" : "home");
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   const scrollTo = useCallback((id) => {
     setMenuOpen(false);
